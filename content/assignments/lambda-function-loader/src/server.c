@@ -15,9 +15,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-
 #include "ipc.h"
-
 
 #include "ipc.h"
 #include "server.h"
@@ -28,41 +26,46 @@
 
 static int lib_prehooks(struct lib *lib)
 {
-       // pre exectution here crd
-        /* TODO: Implement lib_prehooks(). */
-    return 0;
+	// pre exectution here crd
+	/* TODO: Implement lib_prehooks(). */
+	return 0;
 }
 
 static int lib_load(struct lib *lib)
- {
-	//char* mere="/home/student/hackkk/operating-systems/content/assignments/lambda-function-loader/tests";
-    //printf("++ %s ++",lib->filename);
-	lib->handle = dlopen(lib->filename,RTLD_NOW);
-    if (!lib->handle) {
-        fprintf(stderr, "Error loading library: %s\n", dlerror());
-        return -1;
-    }
-    return 0;
- 	
- }
-
+{
+	// char* mere="/home/student/hackkk/operating-systems/content/assignments/lambda-function-loader/tests";
+	// printf("++ %s ++",lib->filename);
+	lib->handle = dlopen(lib->filename, RTLD_NOW);
+	if (!lib->handle)
+	{
+		fprintf(stderr, "Error loading library: %s\n", dlerror());
+		return -1;
+	}
+	return 0;
+}
 
 static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
-    // Call the function
-	typedef void (*Functia)();
-	Functia yourFunction = (Functia)dlsym(lib->handle, lib->funcname);
-    // Add any other operations you need to perform
-	yourFunction();
-	//fclose(lib->handle);
+	// Call the function
+	lib->run = (lambda_func_t)dlsym(lib->handle, lib->funcname);
+	// Add any other operations you need to perform
+	if (lib->run)
+		lib->run();
+	else
+		perror("ceva");
+	printf("a\n");
+	// fclose(lib->handle);
 	return 0;
 }
 
 static int lib_close(struct lib *lib)
 {
 	/* TODO: Implement lib_close(). */
-	fclose(lib->handle);
+
+	printf("V\n");
+	close(lib->handle);
+	printf("a\n");
 	return 0;
 }
 
@@ -92,7 +95,7 @@ static int lib_run(struct lib *lib)
 	if (err)
 		return err;
 
-	return lib_posthooks(lib);	
+	return lib_posthooks(lib);
 }
 
 static int parse_command(const char *buf, char *name, char *func, char *params)
@@ -109,51 +112,103 @@ static int parse_command(const char *buf, char *name, char *func, char *params)
 int main(void)
 {
 	/* TODO: Implement server connection. */
-	int ret;	
+	int ret;
 	struct lib lib;
 
-	
-	lib.filename=malloc(sizeof(char)*100);
-	lib.funcname=malloc(sizeof(char)*100);
-	lib.outputfile=malloc(sizeof(char)*100);
-	lib.libname=malloc(sizeof(char)*100);
-	
-	//printf("%s",lib.outputfile);
+	lib.filename = malloc(sizeof(char) * 100);
+	lib.funcname = malloc(sizeof(char) * 100);
+	lib.outputfile = malloc(sizeof(char) * 100);
+	lib.libname = malloc(sizeof(char) * 100);
+
+	// printf("%s",lib.outputfile);
 	int server_socket;
-    int client_socket;
-	// fac  accept dupa iau cu recv meajul
-    struct sockaddr_un server_addr;
-    struct sockaddr_un client_addr;
+	int client_socket;
+	// fac  accept dupa iau cu recv meajulclose(fd);
 
-    int result;
+	struct sockaddr_un server_addr;
+	struct sockaddr_un client_addr;
 
-    server_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+	int result;
 
-    server_addr.sun_family = AF_UNIX;
-    strcpy(server_addr.sun_path, SOCKET_NAME);
+	server_socket = socket(AF_UNIX, SOCK_STREAM, 0);
 
-    int slen = sizeof(server_addr);
+	memset(&server_addr, 0, sizeof(server_addr));
+	server_addr.sun_family = AF_UNIX;
+	strcpy(server_addr.sun_path, SOCKET_NAME);
 
-    bind(server_socket, (struct sockaddr *) &server_addr, slen);
+	int slen = sizeof(server_addr);
+	// int ret;close(fd);
 
-    listen(server_socket, 10);
+	unlink(SOCKET_NAME);
+	ret = bind(server_socket, (struct sockaddr *)&server_addr, slen);
+	if (ret < 0)
+		perror("bind");
+	listen(server_socket, 10);
 
-	while (1) {
-		//printf("aaa");
+	while (1)
+	{
+		lib.filename = calloc(1, sizeof(char) * BUFSIZE);
+		lib.funcname = calloc(1, sizeof(char) *BUFSIZE);
+		lib.outputfile = calloc(1, sizeof(char) * BUFSIZE);
+		lib.libname = calloc(1, sizeof(char) * BUFSIZE);
+
+		// printf("aaa");
 		/* TODO - get message from client */
 		/* TODO - parse message with parse_command and populate lib */
 		/* TODO - handle request from client */
-		parse_command(buffer)
-		char *buffer=malloc(1024);
-		//trb sa pun in structura datele si sa d au malloc al structura
-        int clen = sizeof(client_addr);
-        client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &clen);
-        recv(client_socket, buffer, 1024,0);
-		printf("%s",buffer);
-        //printf("\nServer: I recieved %c from client!\n", ch);
-        //ret = lib_run(&lib);
-		close(client_socket);
-	}	
+		// trb sa pun in structura datele si sa d au malloc al structura
+		memset(&client_addr, 0, sizeof(client_addr));
+		socklen_t clen = 0;
+		int status = 0;
+
+		memset(&clen, 0, sizeof(clen));
+		client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &clen);
+		if (client_socket < 0)
+		{
+			perror("acccept");
+			exit(2);
+		}
+
+		int child = fork();
+		if (child == 0) // copil
+		{
+			char *buffer = calloc(1, 1024);
+			int var = recv(client_socket, buffer, 1024, 0);
+			if (var < 0)
+			{
+				fprintf(stderr, "ceva once \n");
+				// fflush(stdout);
+				perror("recv");
+				exit(1);
+			}
+			//strcpy(lib.outputfile, "../checker/outpu	t/out-XXXXXX");
+			parse_command(buffer, lib.libname, lib.funcname, lib.filename);
+			
+			strcpy(lib.outputfile,OUTPUT_TEMPLATE);
+
+			//int fd_viktoras = open(lib.outputfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+			int fd=mkstemp(lib.outputfile);
+
+			dup2(fd, STDOUT_FILENO);
+			//close(fd);
+			// bad file descriptor??
+			fprintf(stderr,"== %s == \n", buffer);
+			//fflush(stdout);
+			ret = lib_run(&lib);
+			int vari=write(client_socket,lib.outputfile,sizeof(lib.outputfile));
+			if(vari<0)
+				perror("write");
+			exit(-1);
+		}
+		else
+		{
+			int wpid;
+			while ((wpid = wait(&status)) > 0); // asa asteptam
+			// printf("\nServer: I recieved %c from client!\n", ch);
+			close(client_socket);
+		}
+
+	}
 
 	return 0;
 }
