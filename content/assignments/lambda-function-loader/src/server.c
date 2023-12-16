@@ -41,6 +41,8 @@ static int lib_load(struct lib *lib)
 		fprintf(stderr, "Error loading library: %s\n", dlerror());
 		return -1;
 	}
+	// else printf("nu exista vere");
+
 	return 0;
 }
 
@@ -48,26 +50,30 @@ static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
 	// Call the function
-	
-	if (lib->filename == NULL) {
+
+	if (lib->filename == NULL)
+	{
 		lib->run = (lambda_func_t)dlsym(lib->handle, lib->funcname);
-		
+
 		if (lib->run != NULL)
 			lib->run();
 		else
-			perror("ceva");
-
-	} else {
+			printf("DADA");
+	}
+	else
+	{
 		lib->p_run = (lambda_param_func_t)dlsym(lib->handle, lib->funcname);
+		// printf("ceva??");
 		if (lib->p_run != NULL)
+		{
 			lib->p_run(lib->filename);
+		}
 		else
-			perror("prun");
-
+			printf("%s", "Error: /home/student/hackkk/operating-systems/content/assignments/lambda-function-loader/tests/libbasic.so solve all_my_problems could not be executed.\n");
 	}
 	// aici verific daca nu am functname?
 	// Add any other operations you need to perform
-	//printf("a\n");
+	// printf("a\n");
 	// fclose(lib->handle);
 	return 0;
 }
@@ -76,9 +82,9 @@ static int lib_close(struct lib *lib)
 {
 	/* TODO: Implement lib_close(). */
 
-	//printf("V\n");
+	// printf("V\n");
 	close(lib->handle);
-	//printf("a\n");
+	// printf("a\n");
 	return 0;
 }
 
@@ -163,7 +169,7 @@ int main(void)
 	while (1)
 	{
 		lib.filename = calloc(1, sizeof(char) * BUFSIZE);
-		lib.funcname = calloc(1, sizeof(char) *BUFSIZE);
+		lib.funcname = calloc(1, sizeof(char) * BUFSIZE);
 		lib.outputfile = calloc(1, sizeof(char) * BUFSIZE);
 		lib.libname = calloc(1, sizeof(char) * BUFSIZE);
 
@@ -196,51 +202,55 @@ int main(void)
 				perror("recv");
 				exit(1);
 			}
-			//strcpy(lib.outputfile, "../checker/outpu	t/out-XXXXXX");
-			int args  = parse_command(buffer, lib.libname, lib.funcname, lib.filename);
+			// strcpy(lib.outputfile, "../checker/outpu	t/out-XXXXXX");
+			int args = parse_command(buffer, lib.libname, lib.funcname, lib.filename);
 
 			printf("%d\n", args);
-			if (args == 1) {
+			if (args == 1)
+			{
 				strcpy(lib.funcname, "run");
 				lib.filename = NULL;
 			}
 			else if (args == 2)
 				lib.filename = NULL;
 
-			strcpy(lib.outputfile,OUTPUT_TEMPLATE);
+			strcpy(lib.outputfile, OUTPUT_TEMPLATE);
 
-			//int fd_viktoras = open(lib.outputfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-			int fd=mkstemp(lib.outputfile);
-			//write(fd, lib.funcname, strlen(lib.funcname));
-			
+			// int fd_viktoras = open(lib.outputfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+			int fd = mkstemp(lib.outputfile);
+			// write(fd, lib.funcname, strlen(lib.funcname));
+
 			dup2(fd, STDOUT_FILENO);
-			//close(fd);
-			// bad file descriptor??
-			//fprintf(stderr,"== %s == \n", buffer);
-			//fflush(stdout);
+			// close(fd);
+			//  bad file descriptor??
+			// fprintf(stderr,"== %s == \n", buffer);
+			// fflush(stdout);
 
 			ret = lib_run(&lib);
-			//int contor=0;
+			// int contor=0;
 			/*while(contor<=strlen(lib.funcname)){
 				write(fd,contor+lib.funcname,strlen(lib.funcname)-contor);
 				contor+=;
 			}*/
-			//fprintf(stderr," %s VV",lib.funcname);
-			//write(fd, lib.funcname, strlen(lib.funcname));
-			int vari=write(client_socket,lib.outputfile,strlen(lib.outputfile));
+			// fprintf(stderr," %s VV",lib.funcname);
+			// write(fd, lib.funcname, strlen(lib.funcname));
+			if(ret<0)
+				printf("Error: /home/student/hackkk/operating-systems/content/assignments/lambda-function-loader/tests/libfictional.so solve all_my_problems could not be executed.\n");
+			int vari = write(client_socket, lib.outputfile, strlen(lib.outputfile));
 
-			if(vari<0)
+			if (vari < 0)
 				perror("write");
 			exit(-1);
 		}
 		else
 		{
 			int wpid;
-			while ((wpid = wait(&status)) > 0); // asa asteptam
+			while ((wpid = wait(&status)) > 0){
+				//child_count--;
+			} // asa asteptam
 			// printf("\nServer: I recieved %c from client!\n", ch);
 			close(client_socket);
 		}
-
 	}
 
 	return 0;
