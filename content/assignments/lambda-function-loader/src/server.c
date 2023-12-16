@@ -35,7 +35,7 @@ static int lib_load(struct lib *lib)
 {
 	// char* mere="/home/student/hackkk/operating-systems/content/assignments/lambda-function-loader/tests";
 	// printf("++ %s ++",lib->filename);
-	lib->handle = dlopen(lib->filename, RTLD_NOW);
+	lib->handle = dlopen(lib->libname, RTLD_LAZY);
 	if (!lib->handle)
 	{
 		fprintf(stderr, "Error loading library: %s\n", dlerror());
@@ -48,17 +48,25 @@ static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
 	// Call the function
-	if(lib->funcname)
+	
+	if (lib->filename == NULL) {
 		lib->run = (lambda_func_t)dlsym(lib->handle, lib->funcname);
-	else 
-		strcpy(lib->funcname,"run");
-		lib->run = (lambda_func_t)dlsym(lib->handle, lib->funcname);
+		
+		if (lib->run != NULL)
+			lib->run();
+		else
+			perror("ceva");
+
+	} else {
+		lib->p_run = (lambda_param_func_t)dlsym(lib->handle, lib->funcname);
+		if (lib->p_run != NULL)
+			lib->p_run(lib->filename);
+		else
+			perror("prun");
+
+	}
 	// aici verific daca nu am functname?
 	// Add any other operations you need to perform
-	//if (lib->run)
-	//	lib->run();
-	//else
-	//	perror("ceva");
 	//printf("a\n");
 	// fclose(lib->handle);
 	return 0;
@@ -120,6 +128,8 @@ int main(void)
 	int ret;
 	struct lib lib;
 
+	setvbuf(stdout, NULL, _IONBF, 0);
+
 	lib.filename = malloc(sizeof(char) * BUFSIZE);
 	lib.funcname = malloc(sizeof(char) * 100);
 	lib.outputfile = malloc(sizeof(char) * 100);
@@ -148,7 +158,7 @@ int main(void)
 	ret = bind(server_socket, (struct sockaddr *)&server_addr, slen);
 	if (ret < 0)
 		perror("bind");
-	listen(server_socket, 10);
+	listen(server_socket, 1010);
 
 	while (1)
 	{
@@ -187,20 +197,38 @@ int main(void)
 				exit(1);
 			}
 			//strcpy(lib.outputfile, "../checker/outpu	t/out-XXXXXX");
-			parse_command(buffer, lib.libname, lib.funcname, lib.filename);
-			
+			int args  = parse_command(buffer, lib.libname, lib.funcname, lib.filename);
+
+			printf("%d\n", args);
+			if (args == 1) {
+				strcpy(lib.funcname, "run");
+				lib.filename = NULL;
+			}
+			else if (args == 2)
+				lib.filename = NULL;
+
 			strcpy(lib.outputfile,OUTPUT_TEMPLATE);
 
 			//int fd_viktoras = open(lib.outputfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 			int fd=mkstemp(lib.outputfile);
-
+			//write(fd, lib.funcname, strlen(lib.funcname));
+			
 			dup2(fd, STDOUT_FILENO);
 			//close(fd);
 			// bad file descriptor??
-			fprintf(stderr,"== %s == \n", buffer);
+			//fprintf(stderr,"== %s == \n", buffer);
 			//fflush(stdout);
+
 			ret = lib_run(&lib);
+			//int contor=0;
+			/*while(contor<=strlen(lib.funcname)){
+				write(fd,contor+lib.funcname,strlen(lib.funcname)-contor);
+				contor+=;
+			}*/
+			//fprintf(stderr," %s VV",lib.funcname);
+			//write(fd, lib.funcname, strlen(lib.funcname));
 			int vari=write(client_socket,lib.outputfile,strlen(lib.outputfile));
+
 			if(vari<0)
 				perror("write");
 			exit(-1);
