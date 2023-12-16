@@ -45,16 +45,29 @@ int connect_socket(int fd)
 ssize_t send_socket(int fd, const char *buf, size_t len)
 {
 	/* TODO: Implement send_socket(). */
-	return -1;
+	int ss = send(fd, buf, len, 0);
+	if(ss < 0){
+		perror("ERROR sending socket");
+      	exit(1);
+	}
+
+
+	return ss;
 }
 
 ssize_t recv_socket(int fd, char *buf, size_t len)
 {
 	/* TODO: Implement recv_socket(). */
-	return -1;
+	int rs = recv(fd, buf, len, 0);
+	if(rs < 0){
+		perror("ERROR reciving socket");
+      	exit(1);
+	}
+	return rs;
 }
 
 void close_socket(int fd)
 {
+	close(fd);
 	/* TODO: Implement close_socket(). */
 }
