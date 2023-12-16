@@ -6,8 +6,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <netdb.h>
-#include <netinet/in.h>
 
 
 #include "ipc.h"
@@ -26,16 +24,22 @@ int create_socket(void)
 	return sockfd;
 	
 }
+// 443
 
 int connect_socket(int fd)
 {	
-	struct sockaddr_in serv_addr;
-	bzero((char *) &serv_addr, sizeof(serv_addr));
+	struct sockaddr_un addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
 
-	
 
+	int cs = connect(fd, &addr, sizeof(addr));
+	if(cs < 0){
+		perror("ERROR connecting socket");
+      	exit(1);
+	}
 	/* TODO: Implement connect_socket(). */
-	return -1;
+	return cs;
 }
 
 ssize_t send_socket(int fd, const char *buf, size_t len)
