@@ -48,13 +48,18 @@ static int lib_execute(struct lib *lib)
 {
 	/* TODO: Implement lib_execute(). */
 	// Call the function
-	lib->run = (lambda_func_t)dlsym(lib->handle, lib->funcname);
+	if(lib->funcname)
+		lib->run = (lambda_func_t)dlsym(lib->handle, lib->funcname);
+	else 
+		strcpy(lib->funcname,"run");
+		lib->run = (lambda_func_t)dlsym(lib->handle, lib->funcname);
+	// aici verific daca nu am functname?
 	// Add any other operations you need to perform
-	if (lib->run)
-		lib->run();
-	else
-		perror("ceva");
-	printf("a\n");
+	//if (lib->run)
+	//	lib->run();
+	//else
+	//	perror("ceva");
+	//printf("a\n");
 	// fclose(lib->handle);
 	return 0;
 }
@@ -63,9 +68,9 @@ static int lib_close(struct lib *lib)
 {
 	/* TODO: Implement lib_close(). */
 
-	printf("V\n");
+	//printf("V\n");
 	close(lib->handle);
-	printf("a\n");
+	//printf("a\n");
 	return 0;
 }
 
@@ -115,7 +120,7 @@ int main(void)
 	int ret;
 	struct lib lib;
 
-	lib.filename = malloc(sizeof(char) * 100);
+	lib.filename = malloc(sizeof(char) * BUFSIZE);
 	lib.funcname = malloc(sizeof(char) * 100);
 	lib.outputfile = malloc(sizeof(char) * 100);
 	lib.libname = malloc(sizeof(char) * 100);
@@ -195,7 +200,7 @@ int main(void)
 			fprintf(stderr,"== %s == \n", buffer);
 			//fflush(stdout);
 			ret = lib_run(&lib);
-			int vari=write(client_socket,lib.outputfile,sizeof(lib.outputfile));
+			int vari=write(client_socket,lib.outputfile,strlen(lib.outputfile));
 			if(vari<0)
 				perror("write");
 			exit(-1);
